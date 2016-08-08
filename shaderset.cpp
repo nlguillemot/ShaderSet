@@ -9,9 +9,6 @@
 #include <sys/types.h>
 #endif
 
-// Replace with your own GL header include
-#include "opengl.h"
-
 #include <string>
 #include <fstream>
 #include <cstdio>
