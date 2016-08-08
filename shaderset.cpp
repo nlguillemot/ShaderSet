@@ -203,7 +203,7 @@ void ShaderSet::UpdatePrograms()
                 fprintf(stderr, "Error linking program (");
                 for (const ShaderNameTypePair* shader : program.first)
                 {
-                    if (&shader != &program.first.front())
+                    if (shader != program.first.front())
                     {
                         fprintf(stderr, ", ");
                     }
