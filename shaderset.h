@@ -10,14 +10,39 @@
 
 class ShaderSet
 {
-    using ShaderNameTypePair = std::pair<std::string, GLenum>;
-    using ShaderHandleTimestampPair = std::pair<GLuint, uint64_t>;
+    // typedefs for readability
+    using ShaderHandle = GLuint;
     using ProgramHandle = GLuint;
 
+    // filename and shader type
+    struct ShaderNameTypePair
+    {
+        std::string Name;
+        GLenum Type;
+        bool operator<(const ShaderNameTypePair& rhs) const { return std::tie(Name, Type) < std::tie(rhs.Name, rhs.Type); }
+    };
+    // shader's handle and the timestamp of the most recent update
+    struct ShaderHandleTimestampPair
+    {
+        ShaderHandle Handle;
+        uint64_t Timestamp;
+    };
+    // The handle exposed externally ("public") and the most recent (succeeding/failed) linked program ("internal")
+    // the public handle becomes 0 when a linking failure happens, until the linking error gets fixed
+    struct ProgramPublicInternalPair
+    {
+        ProgramHandle PublicHandle;
+        ProgramHandle InternalHandle;
+    };
+
+    // the version in the version string that gets prepended to each shader
     std::string mVersion;
+    // the preamble which gets prepended to each shader (for eg. shared binding conventions)
     std::string mPreamble;
+    // maps shader name/types to handles, in order to reuse shared shaders.
     std::map<ShaderNameTypePair, ShaderHandleTimestampPair> mShaders;
-    std::map<std::vector<const ShaderNameTypePair*>, ProgramHandle> mPrograms;
+    // allows looking up the program that represents a linked set of shaders
+    std::map<std::vector<const ShaderNameTypePair*>, ProgramPublicInternalPair> mPrograms;
 
 public:
     ShaderSet() = default;
