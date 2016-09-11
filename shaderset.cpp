@@ -153,8 +153,8 @@ void ShaderSet::UpdatePrograms()
     for (std::pair<const ShaderNameTypePair, ShaderHandleTimestampPair>* shader : updatedShaders)
     {
         std::string version = "#version " + mVersion + "\n";
-        std::string premable = mPreamble + "\n";
-        std::string source = ShaderStringFromFile(shader->first.Name.c_str()) + "\n";
+        std::string premable = "#line 1\n" + mPreamble + "\n";
+        std::string source = "#line 1\n" + ShaderStringFromFile(shader->first.Name.c_str()) + "\n";
 
         const char* strings[] = {
             version.c_str(),
