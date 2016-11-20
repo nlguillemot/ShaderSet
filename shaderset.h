@@ -71,6 +71,7 @@ public:
 
     // list of (file name, shader type) pairs
     // eg: AddProgram({ {"foo.vert", GL_VERTEX_SHADER}, {"bar.frag", GL_FRAGMENT_SHADER} });
+    // To be const-correct, this should maybe return "const GLuint*". I'm trusting you not to write to that pointer.
     GLuint* AddProgram(const std::vector<std::pair<std::string, GLenum>>& typedShaders);
 
     // Polls the timestamps of all the shaders and recompiles/relinks them if they changed
@@ -84,5 +85,6 @@ public:
     // tessellation evaluation shader: .tese
     // compute shader: .comp
     // eg: AddProgramFromExts({"foo.vert", "bar.frag"});
+    // To be const-correct, this should maybe return "const GLuint*". I'm trusting you not to write to that pointer.
     GLuint* AddProgramFromExts(const std::vector<std::string>& shaders);
 };
