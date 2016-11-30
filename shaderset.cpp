@@ -53,7 +53,11 @@ static uint64_t GetShaderFileTimestamp(const char* filename)
         return 0;
     }
 
+#ifdef __APPLE__
     timestamp = fileStat.st_mtimespec.tv_sec;
+#else
+    timestamp = fileStat.st_mtime;
+#endif
 #endif
 
     return timestamp;
