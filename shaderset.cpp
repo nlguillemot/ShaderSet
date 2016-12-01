@@ -115,7 +115,8 @@ GLuint* ShaderSet::AddProgram(const std::vector<std::pair<std::string, GLenum>>&
         if (!foundShader->second.Handle)
         {
             foundShader->second.Handle = glCreateShader(shaderNameType.second);
-            foundShader->second.HashName = (int32_t)std::hash<std::string>()(shaderNameType.first);
+            // The sign bit is masked out, since some shader compilers treat the #line as signed, and others treat it unsigned.
+            foundShader->second.HashName = (int32_t)std::hash<std::string>()(shaderNameType.first) & 0x7FFFFFFF;
         }
         shaderNameTypes.push_back(&foundShader->first);
     }
@@ -162,7 +163,7 @@ void ShaderSet::UpdatePrograms()
         // the #line directive also allows specifying a "file name" number, which makes it possible to identify which file the error came from.
         std::string version = "#version " + mVersion + "\n";
         
-        std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble"));
+        std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble") & 0x7FFFFFFF);
         std::string premable = "#line 1 " + preamble_hash + "\n" + 
                                mPreamble + "\n";
         
