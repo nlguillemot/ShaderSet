@@ -163,6 +163,16 @@ void ShaderSet::UpdatePrograms()
         // the #line directive also allows specifying a "file name" number, which makes it possible to identify which file the error came from.
         std::string version = "#version " + mVersion + "\n";
         
+        std::string defines;
+        switch (shader->first.Type) {
+        case GL_VERTEX_SHADER:          defines += "#define VERTEX_SHADER\n";             break;
+        case GL_FRAGMENT_SHADER:        defines += "#define FRAGMENT_SHADER\n";           break;
+        case GL_GEOMETRY_SHADER:        defines += "#define GEOMETRY_SHADER\n";           break;
+        case GL_TESS_CONTROL_SHADER:    defines += "#define TESS_CONTROL_SHADER\n";       break;
+        case GL_TESS_EVALUATION_SHADER: defines += "#define TESS_EVALUATION_SHADER\n";    break;
+        case GL_COMPUTE_SHADER:         defines += "#define COMPUTE_SHADER\n";            break;
+        }
+
         std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble") & 0x7FFFFFFF);
         std::string premable = "#line 1 " + preamble_hash + "\n" + 
                                mPreamble + "\n";
@@ -173,11 +183,13 @@ void ShaderSet::UpdatePrograms()
 
         const char* strings[] = {
             version.c_str(),
+            defines.c_str(),
             premable.c_str(),
             source.c_str()
         };
         GLint lengths[] = {
             (GLint)version.length(),
+            (GLint)defines.length(),
             (GLint)premable.length(),
             (GLint)source.length()
         };
@@ -350,3 +362,14 @@ GLuint* ShaderSet::AddProgramFromExts(const std::vector<std::string>& shaders)
 
     return AddProgram(typedShaders);
 }
+
+GLuint* ShaderSet::AddProgramFromCombinedFile(const std::string &filename, const std::vector<GLenum> &shaderTypes)
+{
+    std::vector<std::pair<std::string, GLenum>> typedShaders;
+
+    for (auto type: shaderTypes)
+        typedShaders.emplace_back(filename, type);
+
+    return AddProgram(typedShaders);
+}
+

@@ -87,4 +87,6 @@ public:
     // eg: AddProgramFromExts({"foo.vert", "bar.frag"});
     // To be const-correct, this should maybe return "const GLuint*". I'm trusting you not to write to that pointer.
     GLuint* AddProgramFromExts(const std::vector<std::string>& shaders);
+
+    GLuint* AddProgramFromCombinedFile(const std::string &filename, const std::vector<GLenum> &shaderTypes);
 };
