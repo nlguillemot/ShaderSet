@@ -88,5 +88,29 @@ public:
     // To be const-correct, this should maybe return "const GLuint*". I'm trusting you not to write to that pointer.
     GLuint* AddProgramFromExts(const std::vector<std::string>& shaders);
 
+    // Convenience to add a single file that contains many shader stages.
+    // Similar to what is explained here: https://software.intel.com/en-us/blogs/2012/03/26/using-ifdef-in-opengl-es-20-shaders
+    // eg: AddProgramFromCombinedFile("shader.glsl", { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER });
+    //
+    // The shader will be compiled many times with a different #define based on which shader stage it's being used for, similarly to the Intel article above.
+    // The defines are as follows:
+    // vertex shader: VERTEX_SHADER
+    // fragment shader: FRAGMENT_SHADER
+    // geometry shader: GEOMETRY_SHADER
+    // tessellation control shader: TESS_CONTROL_SHADER
+    // tessellation evaluation shader: TESS_EVALUATION_SHADER
+    // compute shader: COMPUTE_SHADER
+    //
+    // Note: These defines are not unique to the AddProgramFromCombinedFile API. The defines are also set with any other AddProgram*() API.
+    // Note: You may use the defines from inside the preamble. (ie. the preamble is inserted after those defines.)
+    //
+    // Example combined file shader:
+    //     #ifdef VERTEX_SHADER
+    //     void main() { /* your vertex shader main */ }
+    //     #endif
+    //
+    //     #ifdef FRAGMENT_SHADER
+    //     void main() { /* your fragment shader main */ }
+    //     #endif
     GLuint* AddProgramFromCombinedFile(const std::string &filename, const std::vector<GLenum> &shaderTypes);
 };

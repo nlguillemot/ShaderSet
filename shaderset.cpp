@@ -174,7 +174,7 @@ void ShaderSet::UpdatePrograms()
         }
 
         std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble") & 0x7FFFFFFF);
-        std::string premable = "#line 1 " + preamble_hash + "\n" + 
+        std::string preamble = "#line 1 " + preamble_hash + "\n" + 
                                mPreamble + "\n";
         
         std::string source_hash = std::to_string(shader->second.HashName);
@@ -184,13 +184,13 @@ void ShaderSet::UpdatePrograms()
         const char* strings[] = {
             version.c_str(),
             defines.c_str(),
-            premable.c_str(),
+            preamble.c_str(),
             source.c_str()
         };
         GLint lengths[] = {
             (GLint)version.length(),
             (GLint)defines.length(),
-            (GLint)premable.length(),
+            (GLint)preamble.length(),
             (GLint)source.length()
         };
 
