@@ -1,7 +1,7 @@
 #include "shaderset.h"
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <sys/stat.h>
 #else
 // Not Windows? Assume unix-like.
 #include <unistd.h>
@@ -19,31 +19,11 @@ static uint64_t GetShaderFileTimestamp(const char* filename)
     uint64_t timestamp = 0;
 
 #ifdef _WIN32
-    int filenameBufferSize = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0);
-    if (filenameBufferSize == 0)
+    struct __stat64 stFileInfo;
+    if (_stat64(filename, &stFileInfo) == 0)
     {
-        return 0;
+        timestamp = stFileInfo.st_mtime;
     }
-
-    WCHAR* wfilename = new WCHAR[filenameBufferSize];
-    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wfilename, filenameBufferSize))
-    {
-        // Potential improvement: How can we poll the timestamp without sometimes blocking write access from other programs? (OS race condition)
-        HANDLE hFile = CreateFileW(wfilename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            FILETIME lastWriteTime;
-            if (GetFileTime(hFile, NULL, NULL, &lastWriteTime))
-            {
-                LARGE_INTEGER largeWriteTime;
-                largeWriteTime.HighPart = lastWriteTime.dwHighDateTime;
-                largeWriteTime.LowPart = lastWriteTime.dwLowDateTime;
-                timestamp = largeWriteTime.QuadPart;
-            }
-            CloseHandle(hFile);
-        }
-    }
-    delete[] wfilename;
 #else
     struct stat fileStat;
 
@@ -104,19 +84,29 @@ void ShaderSet::SetPreamble(const std::string& preamble)
 GLuint* ShaderSet::AddProgram(const std::vector<std::pair<std::string, GLenum>>& typedShaders)
 {
     std::vector<const ShaderNameTypePair*> shaderNameTypes;
-        
+
     // find references to existing shaders, and create ones that didn't exist previously.
     for (const std::pair<std::string, GLenum>& shaderNameType : typedShaders)
     {
         ShaderNameTypePair tmpShaderNameType;
         std::tie(tmpShaderNameType.Name, tmpShaderNameType.Type) = shaderNameType;
 
+        // test that the file can be opened (to catch typos or missing file bugs)
+        {
+            std::ifstream ifs(tmpShaderNameType.Name);
+            if (!ifs)
+            {
+                fprintf(stderr, "Failed to open shader %s\n", tmpShaderNameType.Name.c_str());
+            }
+        }
+
         auto foundShader = mShaders.emplace(std::move(tmpShaderNameType), Shader{}).first;
         if (!foundShader->second.Handle)
         {
             foundShader->second.Handle = glCreateShader(shaderNameType.second);
+            // Mask the hash to 16 bits because some implementations are limited to that number of bits.
             // The sign bit is masked out, since some shader compilers treat the #line as signed, and others treat it unsigned.
-            foundShader->second.HashName = (int32_t)std::hash<std::string>()(shaderNameType.first) & 0x7FFFFFFF;
+            foundShader->second.HashName = (int32_t)std::hash<std::string>()(shaderNameType.first) & 0x7FFF;
         }
         shaderNameTypes.push_back(&foundShader->first);
     }
@@ -173,7 +163,7 @@ void ShaderSet::UpdatePrograms()
         case GL_COMPUTE_SHADER:         defines += "#define COMPUTE_SHADER\n";            break;
         }
 
-        std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble") & 0x7FFFFFFF);
+        std::string preamble_hash = std::to_string((int32_t)std::hash<std::string>()("preamble") & 0x7FFF);
         std::string preamble = "#line 1 " + preamble_hash + "\n" + 
                                mPreamble + "\n";
         
